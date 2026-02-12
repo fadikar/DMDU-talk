@@ -47,6 +47,14 @@ execute:
     -   Multi-variate output
 -   Results from a real application
 
+\
+\
+\
+
+#### Slides
+
+https://fadikar.com/DMDU-talk/
+
 -----------------------------------------------------------------
 
 ## Calibration
@@ -1143,6 +1151,30 @@ for(i in 1:5){
 \alpha)$
 - The diagonal shows the estimated marginal posterior pdf for each parameter 
 - The off-diagonal images give estimates of bivariate marginals; to contour lines show estimated 90\% hpd regions.
+
+:::
+
+:::
+
+----------------
+
+## Summary
+
+::: {columns}
+
+:::{.column width = "30%"}
+
+- Gaussian Process emulator.
+
+- Stochastic simulations.
+
+- Multi-variate output
+
+:::
+
+:::{.column width = "70%"}
+
+![](figures/paper.png){width=100%}
 
 :::
 

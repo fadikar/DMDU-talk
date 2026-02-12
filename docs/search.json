@@ -4,7 +4,7 @@
     "href": "slides.html#plan-for-today",
     "title": "Calibration of Stochastic Agent-Based Model",
     "section": "Plan for today",
-    "text": "Plan for today\n\nA gentle introduction to calibration/inverse problem\n\nFinding \\(x = f^{-1}(y)\\)\n\nA live example of calibrating an Agent Based model of Ebola\n\nSurrogate models as emulators\nConsiderations for stochastic simulators\nMulti-variate output\n\nResults from a real application"
+    "text": "Plan for today\n\nA gentle introduction to calibration/inverse problem\n\nFinding \\(x = f^{-1}(y)\\)\n\nA live example of calibrating an Agent Based model of Ebola\n\nSurrogate models as emulators\nConsiderations for stochastic simulators\nMulti-variate output\n\nResults from a real application\n\n\n\n\n\nSlides\nhttps://fadikar.com/DMDU-talk/"
   },
   {
     "objectID": "slides.html#calibration",
@@ -243,5 +243,12 @@
     "title": "Calibration of Stochastic Agent-Based Model",
     "section": "Emulator for Multivariate Output",
     "text": "Emulator for Multivariate Output\nGP to model \\(W_i(\\theta)\\)\n\nW &lt;- udv$v[, 1:nK] / sqrt(ncol(Y_mat_std))\n\nstr(W)\n\n num [1:500, 1:4] -0.00071 -0.00104 -0.00119 -0.00133 -0.00152 ...\n\n## fit GP to each column of W\ngps &lt;- list()\nfor (ii in 1:nK){\n  gps[[ii]] &lt;- mleHomGP(d_normalized_q, W[, ii], known = list(beta0 = 0), covtype = \"Matern5_2\")\n}\n\nFinal Emulator\nPrediction at an untried input \\((\\theta_1^*, \\cdots, \\theta_5^*, \\alpha^*)\\)"
+  },
+  {
+    "objectID": "slides.html#summary",
+    "href": "slides.html#summary",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Summary",
+    "text": "Summary\n\n\n\nGaussian Process emulator.\nStochastic simulations.\nMulti-variate output"
   }
 ]
