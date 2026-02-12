@@ -1,0 +1,330 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;600;700&display=swap');
+
+/* ---------------------------
+   CUSTOM REVEALJS THEME START
+---------------------------- */
+
+/* .reveal .quarto-title-block * {
+  outline: 1px dashed red;
+} */
+
+.reveal {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               Helvetica, Arial, sans-serif !important;
+}
+/* ---------------------------
+   TITLE SLIDE CUSTOMIZATION
+---------------------------- */
+
+
+.reveal #title-slide .title {
+  display: inline-block;                /* shrink-wrap to title text */
+  padding: 0.4em 0.8em;                 /* spacing inside the box */
+  
+  background: rgba(99, 171, 197, 0.28); /* light teal tint */
+  border: 4px solid rgba(26, 112, 143, 0.69);
+  border-radius: 8px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+
+/* Title: smaller + colored */
+.reveal #title-slide .title {
+  font-size: 2em !important;     /* smaller than default */
+  color: #0d485eff !important;
+  margin-bottom: 1em;
+  font-weight: 500;
+}
+
+/* Author name: larger + colored */
+.reveal #title-slide .quarto-title-author-name {
+  font-size: 1.15em !important;
+  color: #082b37ff !important;
+  font-weight: 500;
+  margin-bottom: 0.5em;
+}
+
+/* Affiliation / institute: slightly smaller + different color */
+.reveal #title-slide .quarto-title-affiliation {
+  font-size: 1.05em !important;
+  color: #d08011ff !important;
+  font-weight: 500;
+  margin-top: 0.5em;
+}
+
+/* Change slide title color */
+.reveal h1,
+.reveal h2 {
+  color: #1a6f8f !important;   /* choose your preferred color */
+  font-weight: 500;
+}
+
+
+/* Slightly larger title spacing */
+.reveal h1,
+.reveal h2 {
+  margin-bottom: 0.4em;
+}
+
+/* Optional: adjust background for title slides */
+section[data-state="title-slide"] h1 {
+  color: #0e3d4d !important;
+}
+
+
+
+
+/* Reduce title bar vertical space */
+.reveal section h2 {
+  margin-top: -30px !important;
+  padding-top: 0px !important;
+  padding-bottom: 8px !important;
+}
+
+
+/* Slide titles */
+/* Full-width slide title bar */
+.reveal section h2 {
+  display: block;                  /* spans width */
+  width: 100%;
+  background: rgba(240, 245, 250, 0.9);   /* light background */
+  padding: 8px 20px;
+  border-radius: 12px;             /* rounded edges */
+  margin: 0px 0 25px 0;            /* spacing below title */
+  border: 1px solid rgba(0,0,0,0.15);
+  font-weight: 700;
+  text-align: left;                /* or center if you prefer */
+  box-sizing: border-box;          /* avoids overflow */
+
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* Optional: MetaRVM teal accent bar on the left */
+.reveal section h2 {
+  border-left: 8px solid #1a6f8f;
+}
+
+/* ============================================================
+   BULLET STYLING FOR REVEALJS (Quarto)
+   ------------------------------------
+   • First-level bullets: hollow square □
+   • Second-level bullets: en-dash –
+   ============================================================ */
+
+/* Remove default bullets everywhere */
+.reveal ul {
+  list-style: none !important;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+/* -------------------------------
+   FIRST-LEVEL BULLETS: HOLLOW □
+   (any li directly under a ul)
+-------------------------------- */
+.reveal ul > li {
+  position: relative;
+  margin-bottom: 0.35em;
+  padding-left: 1.4em;        /* space between square and text */
+}
+
+/* hollow square */
+.reveal ul > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.45em;
+
+  width: 0.5em;
+  height: 0.5em;
+
+  background: transparent;
+  border: 5px solid #20adeeff;  /* accent color */
+  border-radius: 8px;
+}
+
+/* -------------------------------
+   SECOND-LEVEL BULLETS: DASH –
+   (li whose parent ul is nested in another ul)
+-------------------------------- */
+.reveal ul ul {
+  margin-top: 0.25em;
+  padding-left: 1.6em;        /* indent nested list as a group */
+}
+
+.reveal ul ul > li {
+  padding-left: 1.1em;        /* small indent inside nested li */
+}
+
+/* dash bullet overrides square */
+.reveal ul ul > li::before {
+  content: "–";               /* dash */
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+
+  color: #1a6f8f;
+  font-weight: 600;
+  font-size: 1.1em;
+
+  /* kill the square styling */
+  background: none !important;
+  border: none !important;
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Reduce indentation slightly (optional) */
+.reveal ul ul {
+  padding-left: 0.2em !important;  /* default is ~1.5em */
+}
+
+/* Center images inside column layouts */
+.reveal .column img {
+  display: block;
+  margin: 0 auto;
+}
+
+/* 3-column layout: narrow–wide–narrow */
+.reveal .columns.three-panel {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.reveal .columns.three-panel > .column:nth-child(1),
+.reveal .columns.three-panel > .column:nth-child(3) {
+  flex: 0 0 33%;     /* ODE and ABM columns */
+}
+
+.reveal .columns.three-panel > .column:nth-child(2) {
+  flex: 0 0 34%;     /* MetaRVM column */
+}
+
+
+/* 2-column layout: wide–narrow */
+.reveal .columns.two-wide-narrow-panel {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.reveal .columns.two-wide-narrow-panel > .column:nth-child(1) {
+  flex: 0 0 60%;     /* ODE and ABM columns */
+}
+
+.reveal .columns.two-wide-narrow-panel > .column:nth-child(2) {
+  flex: 0 0 40%;     /* MetaRVM column */
+}
+
+/* 3-column layout: equal */
+.reveal .columns.three-equal-panel {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.reveal .columns.three-equal-panel > .column:nth-child(1),
+.reveal .columns.three-equal-panel > .column:nth-child(2),
+.reveal .columns.three-equal-panel > .column:nth-child(3) {
+  flex: 0 0 33.33%;     /* ODE and ABM columns */
+}
+
+
+.reveal .column h1,
+.reveal .column h2,
+.reveal .column h3,
+.reveal .column h4,
+.reveal .column h5 {
+  text-align: center;
+}
+
+.reveal h1, .reveal h2, .reveal h3 .reveal h4{
+  font-family: "Lato", sans-serif !important;
+}
+
+.reveal .column img {
+  max-width: none !important;
+}
+
+/* Highlight box for a column */
+.reveal .highlight-box {
+  border: 3px solid #1a6f8f;        /* MetaRVM accent color */
+  background: rgba(26, 111, 143, 0.08);
+  border-radius: 14px;
+  padding: 1rem 1.2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Keep bullets aligned correctly inside the box */
+.reveal .highlight-box ul {
+  padding-left: 1.2em !important;
+}
+
+/* QR code on title slide: bottom-right fixed position */
+#title-slide .qr-code {
+  position: absolute;
+  right: 2%;
+  bottom: 3%;
+  width: 120px;          /* adjust as needed */
+  z-index: 9999;
+}
+
+/* Center all content inside columns for this slide */
+#argonne, #cdph {
+  text-align: center;
+}
+
+/* Base: make columns transform nicely */
+.reveal .three-panel .column {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  transform-origin: center center;
+}
+
+/* ODE and ABM: always dimmed and slightly smaller */
+.reveal #ode-panel-dim,
+.reveal #abm-panel-dim {
+  opacity: 0.35;
+  transform: scale(0.95);
+}
+
+/* MetaRVM: always highlighted and slightly zoomed */
+.reveal #metarvm-panel {
+  opacity: 1;
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+/* Base state: all columns are visible but dimmed & slightly shrunk */
+.reveal .fragment.zoom-step {
+  opacity: 0.35 !important;           /* dim at start */
+  transform: scale(0.95) !important;  /* slightly smaller */
+  transform-origin: center center;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+/* Any fragment that has been shown but is not current = dimmed */
+.reveal .fragment.zoom-step.visible {
+  opacity: 0.35 !important;
+  transform: scale(0.95) !important;
+}
+
+/* The currently active fragment = fully opaque & zoomed */
+.reveal .fragment.zoom-step.current-fragment {
+  opacity: 1 !important;
+  transform: scale(1.05) !important;  /* adjust zoom as needed */
+  z-index: 2;
+}
+
+/* Give the References slide a bit more top room */
+.reveal section#references {
+  padding-top: 24px !important;   /* adjust up/down as needed */
+}
+
+/* And/or add some margin above the References title bar */
+.reveal section#references h2 {
+  margin-top: 8px !important;
+}
+
+
+
+.callout {
+  font-size: 1.2em !important;
+  color:#e05316
+}

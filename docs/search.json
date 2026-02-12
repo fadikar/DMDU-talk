@@ -1,0 +1,226 @@
+[
+  {
+    "objectID": "slides.html#plan-for-today",
+    "href": "slides.html#plan-for-today",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Plan for today",
+    "text": "Plan for today\n\nA gentle introduction to calibration/inverse problem\n\nFinding \\(x = f^{-1}(y)\\)\n\nA live example of calibrating an Agent Based model of Ebola\n\nSurrogate models as emulators\nConsiderations for stochastic simulators\nMulti-variate output\n\nResults from a real application"
+  },
+  {
+    "objectID": "slides.html#calibration",
+    "href": "slides.html#calibration",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Calibration",
+    "text": "Calibration\n\n\n\n\n\n%%{init: {'flowchart': {'curve': 'linear'}, 'theme': 'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'arial'}, 'flowchart': {'htmlLabels': true, 'useMaxWidth': true}}}%%\ngraph TD\n    A[\"Input Parameters\"] --&gt;|Feed to| B[\"Simulator\"]\n    B --&gt;|Produces| C[\"Simulated Output\"]\n    D[\"Observations\"]\n    D --&gt;|Compare with| E[\"Calibration Algorithm\"]\n    C --&gt;|Input to| E\n    E --&gt;|Returns| F[\"Estimated Input Parameters\"]\n    F -.-&gt;|Feedback Loop| A\n    \n    linkStyle 0,1,2,3,4,5 stroke:#333,stroke-width:2px,color:#FF1493\n    \n\n    style A fill:#e1f5ff\n    style B fill:#fff3e0\n    style C fill:#f3e5f5\n    style D fill:#e8f5e9\n    style E fill:#fce4ec\n    style F fill:#e1f5ff"
+  },
+  {
+    "objectID": "slides.html#calibration-with-emulator",
+    "href": "slides.html#calibration-with-emulator",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Calibration with emulator",
+    "text": "Calibration with emulator\n\n\nEmulator Training\n\n\n\n\n\n%%{init: {'fontSize': '20px'}, 'flowchart': {'htmlLabels': true, 'useMaxWidth': true}}%%\ngraph TD\n    A[\"Input Parameters\"]\n    A --&gt;|Feed to| C[\"Simulator\"]\n    C --&gt;|Produces| E[\"Simulated Output\"]\n    E --&gt;|Train| B[\"Emulator\"]\n    \n    linkStyle 0,1,2 stroke:#333,stroke-width:2px,color:#FF1493\n\n    style A fill:#e1f5ff\n    style B fill:#fff3e0\n    style C fill:#fff3e0\n    style E fill:#f3e5f5\n\n\n\n\n\n\n\nCalibration\n\n\n\n\n\n%%{init: {'fontSize': '20px'}}%%\ngraph TD\n    A[\"Input Parameters\"]\n    A --&gt;|Feed to| B[\"Emulator\"]\n    B --&gt;|Produces| D[\"Emulated Output\"]\n    F[\"Observations\"] --&gt;|Compare with| G[\"Calibration Algorithm\"]\n    D --&gt;|Input to| G\n    G --&gt;|Returns| H[\"Estimated Input Parameters\"]\n    H -.-&gt;|Feedback Loop| A\n    \n    linkStyle 0,1,2,3,4,5 stroke:#333,stroke-width:2px,color:#FF1493\n\n    style A fill:#e1f5ff\n    style B fill:#fff3e0\n    style D fill:#f3e5f5\n    style F fill:#e8f5e9\n    style G fill:#fce4ec\n    style H fill:#e1f5ff"
+  },
+  {
+    "objectID": "slides.html#example-ebola-model",
+    "href": "slides.html#example-ebola-model",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Example: Ebola model",
+    "text": "Example: Ebola model\n\nAn agent-based model for Ebola in Liberia.\nDepends on a highly detailed synthetic population with realistic contact networks and demographic characteristics.\n5 dimensional inputs\n\ntransmission rate (\\(\\theta_1\\))\ninitial infections (\\(\\theta_2\\))\nhospital intervention delay (\\(\\theta_3\\))\nhospital intervention efficacy (\\(\\theta_4\\))\ntravel intervention (\\(\\theta_5\\))\n\nTime-series output of daily infections\nStochastic output"
+  },
+  {
+    "objectID": "slides.html#the-calibration-challenge",
+    "href": "slides.html#the-calibration-challenge",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "The Calibration Challenge",
+    "text": "The Calibration Challenge\nWe were given:\n\nA ground truth time series of observed Ebola cases.\nA set of simulation runs pre specified parameter values.\n\nGoal:\n\nTo find calibrated model which can be used to make forward predictions and run scenario analyses.\n\n\n\n\n\\[ \\text{Find} \\;\\;\\; \\Theta^* = \\left\\{(\\theta_1, \\cdots, \\theta_5): f^{\\text{sim}}(\\theta_1, \\cdots, \\theta_5)\\approx \\left(Y_1^{(obs)}, \\cdots, Y_t^{(obs)}\\right)\\right\\} \\]"
+  },
+  {
+    "objectID": "slides.html#data",
+    "href": "slides.html#data",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Data",
+    "text": "Data\n\n\nSimulation Input\n\n\nSimulation Output"
+  },
+  {
+    "objectID": "slides.html#simulation-campaign",
+    "href": "slides.html#simulation-campaign",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Simulation Campaign",
+    "text": "Simulation Campaign\n\n\nSimulation Input\n\n\nSimulation Output"
+  },
+  {
+    "objectID": "slides.html#naive-solution",
+    "href": "slides.html#naive-solution",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Naive Solution",
+    "text": "Naive Solution\n\nIf we had access to the simulator,"
+  },
+  {
+    "objectID": "slides.html#build-an-emulator",
+    "href": "slides.html#build-an-emulator",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Build an Emulator",
+    "text": "Build an Emulator\n\nWe don’t have access to the (expnesive) Ebola ABM\nEven if we had, we wouldn’t be able to run arbitrarily large number of simulations due to budget constraints\n\nWhat is an emulator?\n\nAn approximation of the actual simulator.\nCheap to evaluate, often limited in functionality.\nDesirable to have meaningful statistical properties."
+  },
+  {
+    "objectID": "slides.html#gaussian-process-as-an-emulator",
+    "href": "slides.html#gaussian-process-as-an-emulator",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Gaussian Process as an Emulator",
+    "text": "Gaussian Process as an Emulator\n\nA non-parametric Bayesian approach to modeling functions\nDefines a distribution over functions, not just parameters\nAny finite collection of function values follows a multivariate Gaussian distribution\n\n\n\n\n\n\n\nNote\n\n\n\\[z(x) \\sim \\mathcal{GP}(m(x), k(x, x'))\\]\nwhere \\(m(x)\\) is the mean function and \\(k(x, x')\\) is the covariance (kernel) function\n\n\n\n\nCore idea: Encode relationship between \\(z(x)\\) and \\(z(x')\\) based on distance between \\(x\\) and \\(x'\\)\n\nIf \\(x\\) and \\(x'\\) are close, then \\(z(x)\\) and \\(z(x')\\) should be similar\nCovariance function \\(k(x, x')\\) captures this spatial correlation"
+  },
+  {
+    "objectID": "slides.html#covariance-kernel-the-meat-of-gp",
+    "href": "slides.html#covariance-kernel-the-meat-of-gp",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Covariance Kernel, the Meat of GP",
+    "text": "Covariance Kernel, the Meat of GP"
+  },
+  {
+    "objectID": "slides.html#covariance-kernels",
+    "href": "slides.html#covariance-kernels",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Covariance Kernels",
+    "text": "Covariance Kernels\nSamples from unconditional GP\n\nDefine locations \\((x_1, x_2, \\cdots, x_n)\\).\nEvaluate the covariance matrix \\(K\\) according to the covariance kernel.\nDraw sample from \\(MVN(0, K)\\).\n\n\n\n\nCommon Covariance Kernels\n\nRBF (Radial Basis Function / Squared Exponential): \\(k(x, x') = \\sigma^2 \\exp\\left(-\\frac{\\|x - x'\\|^2}{2\\ell^2}\\right)\\)\nMatérn: \\(k(x, x') = \\sigma^2 \\frac{2^{1-\\nu}}{\\Gamma(\\nu)} \\left(\\frac{\\sqrt{2\\nu}\\|x - x'\\|}{\\ell}\\right)^\\nu K_\\nu\\left(\\frac{\\sqrt{2\\nu}\\|x - x'\\|}{\\ell}\\right)\\)\nPeriodic: \\(k(x, x') = \\sigma^2 \\exp\\left(-\\frac{2\\sin^2(\\pi|x - x'|/p)}{\\ell^2}\\right)\\)\nLinear: \\(k(x, x') = \\sigma^2 (x - c)(x' - c)\\)"
+  },
+  {
+    "objectID": "slides.html#covariance-kernels-1",
+    "href": "slides.html#covariance-kernels-1",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Covariance Kernels",
+    "text": "Covariance Kernels\nSamples from unconditional GP"
+  },
+  {
+    "objectID": "slides.html#covariance-kernels-2",
+    "href": "slides.html#covariance-kernels-2",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Covariance Kernels",
+    "text": "Covariance Kernels\nSamples from unconditional GP"
+  },
+  {
+    "objectID": "slides.html#covariance-kernel---rbf",
+    "href": "slides.html#covariance-kernel---rbf",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Covariance Kernel - RBF",
+    "text": "Covariance Kernel - RBF\nSamples from unconditional GP"
+  },
+  {
+    "objectID": "slides.html#covariance-kernel---rbf-1",
+    "href": "slides.html#covariance-kernel---rbf-1",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Covariance Kernel - RBF",
+    "text": "Covariance Kernel - RBF\n\nObserve: \\((X, Z)\\) where \\(X = \\{x_1, ..., x_n\\}\\) and \\(Z = \\{z_1, ..., z_n\\}\\)\nTest points: \\(X_* = \\{x_1^*, ..., x_m^*\\}\\)\n\nJoint Distribution\nThe joint distribution of observed and test points is:\n\\[\\begin{bmatrix} Z \\\\ Z_* \\end{bmatrix} \\sim \\mathcal{N}\\left(\n\\begin{bmatrix} \\mu \\\\ \\mu_* \\end{bmatrix},\n\\begin{bmatrix} K(X, X) + \\sigma_n^2 I & K(X, X_*) \\\\ K(X_*, X) & K(X_*, X_*) \\end{bmatrix}\n\\right)\\]\nwhere \\(\\sigma_n^2\\) is the observation noise variance\nConditional Distribution\nThe posterior distribution \\(Z_* | X, Z, X_*\\) is Gaussian:\n\\[Z_* | X, Z, X_* \\sim \\mathcal{N}(\\mu_{*|Z}, \\Sigma_{*|Z})\\]\nwhere:\n\n\\(\\mu_{*|Z} = \\mu_* + K(X_*, X)[K(X, X) + \\sigma_n^2 I]^{-1}(Z - \\mu)\\)\n\\(\\Sigma_{*|Z} = K(X_*, X_*) - K(X_*, X)[K(X, X) + \\sigma_n^2 I]^{-1}K(X, X_*)\\)"
+  },
+  {
+    "objectID": "slides.html#covariance-kernel---rbf-2",
+    "href": "slides.html#covariance-kernel---rbf-2",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Covariance Kernel - RBF",
+    "text": "Covariance Kernel - RBF\nSamples from conditional GP"
+  },
+  {
+    "objectID": "slides.html#back-to-the-problem",
+    "href": "slides.html#back-to-the-problem",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Back to the problem",
+    "text": "Back to the problem\nConsider a smaller problem.\n\nCalibrate to the observed cumulative infections at the end of week 30.\nPretend that the simulation is deterministic (only use one replicate at each input).\nNeed an emulator for 30 weeks cumulative infections."
+  },
+  {
+    "objectID": "slides.html#emulator-for-day-30-cumulative-infections",
+    "href": "slides.html#emulator-for-day-30-cumulative-infections",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Emulator for day 30 cumulative infections",
+    "text": "Emulator for day 30 cumulative infections\n\n\nData Preprocessing\n\n# d is a matrix of order 100x5, where each row represents one unique combination of\n# (theta_1, ..., theta_5)\n# Normalize input parameters to [0, 1]\nd_min &lt;- apply(d, 2, min)\nd_max &lt;- apply(d, 2, max)\nd_normalized &lt;- sweep(sweep(d, 2, d_min, \"-\"), 2, d_max - d_min, \"/\")\n\n# Transform output\nsim30_log &lt;- log(sim30 + 1)\n\ny_std &lt;- (sim30_log - mean(sim30_log)) / sd(sim30_log)\nobs30_std &lt;- (log(obs30) - mean(sim30_log)) / sd(sim30_log)\n\nplot(y_std, ylab = \"Log Cumulative infections at day 30\", xlab = \"parameter index\")\nabline(h = obs30_std, col = \"red\", cex = 1.2)\ntext(40, obs30_std-2, \"observation\", col = 2, cex = 1.2)\n\n\n\n\n\n\n\n\n\nGP fitting\n\nlibrary(hetGP)\ngp_fit &lt;- mleHomGP(X = d_normalized, Z = y_std, known = list(beta0 = 0))\ngp_fit\n\nN =  100  n =  100  d =  5 \nGaussian  covariance lengthscale values:  2.307185 2.470611 2.124024 2.470611 2.470611 \nHomoskedastic nugget value:  0.03716173 \nVariance/scale hyperparameter:  1.73618 \nGiven constant trend value:  0 \nMLE optimization: \n Log-likelihood =  -40.87428 ; Nb of evaluations (obj, gradient) by L-BFGS-B:  39 39 ; message:  CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH \n\nplot(gp_fit)"
+  },
+  {
+    "objectID": "slides.html#covariance-kernel---rbf-3",
+    "href": "slides.html#covariance-kernel---rbf-3",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Covariance Kernel - RBF",
+    "text": "Covariance Kernel - RBF\nSamples from conditional GP"
+  },
+  {
+    "objectID": "slides.html#run-calibration",
+    "href": "slides.html#run-calibration",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Run Calibration",
+    "text": "Run Calibration\nPlug the emulator in any optimization/inference routine of your choice to find good \\((\\theta_1, \\cdots, \\theta_5)\\) candidates.\n\nWe use Approximate Bayesian Computation\n\n\n# ABC settings\nn_abc &lt;- 100000\ntolerance &lt;- 0.2\n\n# generate samples from prior\nabc_samples &lt;- matrix(runif(n_abc * 5), nrow = n_abc, ncol = 5)\ncolnames(abc_samples) &lt;- paste0('theta_', 1:5)\n\npred_abc &lt;- predict(gp_fit, abc_samples)\npred_mean_abc &lt;- pred_abc$mean\npred_sd_abc &lt;- sqrt(pred_abc$sd2 + pred_abc$nugs)\n\ndiscrepancy &lt;- abs(pred_mean_abc - obs30_std)\n\naccepted &lt;- discrepancy &lt; tolerance\nn_accepted &lt;- sum(accepted)\n\ncat(sprintf(\"ABC Results:\\n\"))\ncat(sprintf(\"  Samples accepted: %d / %d (%.2f%%)\\n\", \n            n_accepted, n_abc, 100 * n_accepted / n_abc))\n\nabc_accepted &lt;- abc_samples[accepted, ]\n\nabc_accepted_original &lt;- sweep(abc_accepted, 2, d_max - d_min, \"*\")\nabc_accepted_original &lt;- sweep(abc_accepted_original, 2, d_min, \"+\")\n\npar(mfrow = c(2, 3))\nfor (i in 1:5){\n  hist(abc_accepted_original[, i], main = expression(paste(\"Posterior of \", theta[i])),\n  xlab = expression(paste(theta[i])))\n}\n\nhist(exp(pred_mean_abc[accepted] * sd(sim30_log) + mean(sim30_log)), main = \"Posterior cumulative infections\", xlim = c(5000, 8000), xlab = \"cumulative infections\")\nabline(v = obs30, col = 2, lty = 2, cex = 1.2)"
+  },
+  {
+    "objectID": "slides.html#run-calibration-1",
+    "href": "slides.html#run-calibration-1",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Run Calibration",
+    "text": "Run Calibration\nPlug the emulator in any optimization/inference routine of your choice to find good \\((\\theta_1, \\cdots, \\theta_5)\\) candidates.\n\nWe use Approximate Bayesian Computation\n\n\n\nABC Results:\n\n\n  Samples accepted: 7340 / 1000000 (0.73%)"
+  },
+  {
+    "objectID": "slides.html#how-to-deal-with-stochastic-output",
+    "href": "slides.html#how-to-deal-with-stochastic-output",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "How to deal with stochastic output",
+    "text": "How to deal with stochastic output\n\nA natural approach is to use the mean (and variance) of the simulation output as the summary statistic for comparison with observations.\nA GP emulator can approximate both the mean and the variance given the input.\n\n\n# flatten the replicated output\nsim30 &lt;- as.numeric(sima[, , 30])\nsim30_log &lt;- log(sim30 + 1)\n\ny_std &lt;- (sim30_log - mean(sim30_log)) / sd(sim30_log)\n\n# generate a replicated design matrix\nd_normalized_rep &lt;- d_normalized[rep(1:100, each = 100), ]\n\ngp_fit &lt;- mleHetGP(X = d_normalized_rep, Z = y_std, known = list(beta0 = 0), \n                  covtype = \"Matern5_2\")\ngp_fit\n\nN =  10000  n =  100  d =  5 \nMatern5_2  covariance lengthscale values of the main process:  0.5774421 0.3996435 1.013529 1.003587 1.377869 \nVariance/scale hyperparameter:  0.5919967 \nSummary of Lambda values: \n    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. \n0.003310 0.008398 0.017072 0.396408 0.188800 4.607871 \nGiven constant trend value:  0 \nMatern5_2  covariance lengthscale values of the log-noise process:  0.5774421 0.3996435 1.013529 1.003587 1.377869 \nNugget of the log-noise process:  1e-06 \nEstimated constant trend value of the log-noise process:  -1.955257 \nMLE optimization: \n Log-likelihood =  3351.833 ; Nb of evaluations (obj, gradient) by L-BFGS-B:  44 44 ; message:  CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH"
+  },
+  {
+    "objectID": "slides.html#how-to-deal-with-stochastic-output-1",
+    "href": "slides.html#how-to-deal-with-stochastic-output-1",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "How to deal with stochastic output",
+    "text": "How to deal with stochastic output\n\nA natural approach is to use the mean (and variance) of the simulation output as the summary statistic for comparison with observations.\nA GP emulator can approximate both the mean and the variance given the input.\n\n\nplot(gp_fit)"
+  },
+  {
+    "objectID": "slides.html#issue-with-gaussian-assumption",
+    "href": "slides.html#issue-with-gaussian-assumption",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Issue with Gaussian assumption",
+    "text": "Issue with Gaussian assumption\n\n\nThe replicate variablity can not be sufficiently described by a mean and a variance of a Gaussian distribution."
+  },
+  {
+    "objectID": "slides.html#use-quantiles",
+    "href": "slides.html#use-quantiles",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Use Quantiles",
+    "text": "Use Quantiles\n\nDescribe the replicate variabilty via empirical quantiles.\nModel the quantiles using GP."
+  },
+  {
+    "objectID": "slides.html#quantile-gp",
+    "href": "slides.html#quantile-gp",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Quantile GP",
+    "text": "Quantile GP\n\n# compute empirical quantiles\nsim30_q &lt;- apply(sima[, , 30], 2, quantile, probs = c(0.05, 0.275, 0.5, 0.725, 0.95))\nsim30_q[, 1:5]\n\n          [,1]    [,2]     [,3]     [,4]      [,5]\n5%    11024.35    1.00 138572.8 10586.20  77403.65\n27.5% 13514.57    3.00 155366.4 12675.42  86900.82\n50%   14480.50 1299.50 167211.5 13970.00  94504.50\n72.5% 15379.62 3141.25 180769.0 14909.77 103736.58\n95%   17323.05 5069.15 198685.7 18056.65 117143.95\n\n# augment the quantile input to the design matrix\nd_normalized_q &lt;- cbind(d_normalized[rep(1:100, each = 5), ], \n                        rep(c(0.05, 0.275, 0.5, 0.725, 0.95), 5))\ncolnames(d_normalized_q)[6] &lt;- \"alpha\"\nd_normalized_q[1:10, ]                       \n\n       theta_1   theta_2 theta_3  theta_4  theta_5 alpha\n [1,] 0.535354 0.8947368   0.000 0.858586 0.727273 0.050\n [2,] 0.535354 0.8947368   0.000 0.858586 0.727273 0.275\n [3,] 0.535354 0.8947368   0.000 0.858586 0.727273 0.500\n [4,] 0.535354 0.8947368   0.000 0.858586 0.727273 0.725\n [5,] 0.535354 0.8947368   0.000 0.858586 0.727273 0.950\n [6,] 0.565657 0.0000000   0.375 0.313131 0.323232 0.050\n [7,] 0.565657 0.0000000   0.375 0.313131 0.323232 0.275\n [8,] 0.565657 0.0000000   0.375 0.313131 0.323232 0.500\n [9,] 0.565657 0.0000000   0.375 0.313131 0.323232 0.725\n[10,] 0.565657 0.0000000   0.375 0.313131 0.323232 0.950"
+  },
+  {
+    "objectID": "slides.html#quantile-gp-1",
+    "href": "slides.html#quantile-gp-1",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Quantile GP",
+    "text": "Quantile GP\n\nFeed the augmented data into any standard GP module.\n\n\nsim30_q_log &lt;- log(sim30_q + 1)\nsim30_q_log &lt;- as.numeric(sim30_q_log)\n\ny_std &lt;- (sim30_q_log - mean(sim30_q_log)) / sd(sim30_q_log)\n\ngp_fit &lt;- mleHomGP(X = d_normalized_q, Z = y_std, known = list(beta0 = 0), \n                  covtype = \"Matern5_2\")\n\nplot(gp_fit)"
+  },
+  {
+    "objectID": "slides.html#quantile-gp-abc",
+    "href": "slides.html#quantile-gp-abc",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Quantile GP + ABC",
+    "text": "Quantile GP + ABC\n\n\nABC Results:\n\n\n  Samples accepted: 922 / 100000 (0.92%)"
+  },
+  {
+    "objectID": "slides.html#emulator-for-week-30-cumulative-infections",
+    "href": "slides.html#emulator-for-week-30-cumulative-infections",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Emulator for week 30 cumulative infections",
+    "text": "Emulator for week 30 cumulative infections\n\n\nData Preprocessing\n\n# d is a matrix of order 100x5, where each row represents one unique combination of\n# (theta_1, ..., theta_5)\n# Normalize input parameters to [0, 1]\nd_min &lt;- apply(d, 2, min)\nd_max &lt;- apply(d, 2, max)\nd_normalized &lt;- sweep(sweep(d, 2, d_min, \"-\"), 2, d_max - d_min, \"/\")\n\n# Transform output\nsim30_log &lt;- log(sim30 + 1)\n\ny_std &lt;- (sim30_log - mean(sim30_log)) / sd(sim30_log)\nobs30_std &lt;- (log(obs30) - mean(sim30_log)) / sd(sim30_log)\n\nplot(y_std, ylab = \"Log Cumulative infections at week 30\", xlab = \"parameter index\")\nabline(h = obs30_std, col = \"red\", cex = 1.2)\ntext(40, obs30_std-2, \"observation\", col = 2, cex = 1.2)\n\n\n\n\n\n\n\n\n\nGP fitting\n\nlibrary(hetGP)\ngp_fit &lt;- mleHomGP(X = d_normalized, Z = y_std, known = list(beta0 = 0))\ngp_fit\n\nN =  100  n =  100  d =  5 \nGaussian  covariance lengthscale values:  2.307185 2.470611 2.124024 2.470611 2.470611 \nHomoskedastic nugget value:  0.03716173 \nVariance/scale hyperparameter:  1.73618 \nGiven constant trend value:  0 \nMLE optimization: \n Log-likelihood =  -40.87428 ; Nb of evaluations (obj, gradient) by L-BFGS-B:  39 39 ; message:  CONVERGENCE: REL_REDUCTION_OF_F &lt;= FACTR*EPSMCH \n\nplot(gp_fit)"
+  },
+  {
+    "objectID": "slides.html#emulator-for-multivariate-output",
+    "href": "slides.html#emulator-for-multivariate-output",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Emulator for Multivariate Output",
+    "text": "Emulator for Multivariate Output\n\nSo far we have emulated scalar output - cumulative infections at week 30.\nHow can we extend GP emulator to time-series output?\n\nUse time as an input to GP - not scalable\nUse basis decomposition\n\n\n\n\n\\[f^{\\text{sim}}(\\theta, \\alpha) = \\underbrace{\\phi_0}_{\\text{mean}} + \\sum_{k=1}^{p} \\underbrace{\\phi_k}_{\\text{basis}} \\underbrace{w_k(\\theta, \\alpha)}_{\\text{GP}} + \\epsilon\\]"
+  },
+  {
+    "objectID": "slides.html#full-bayesian-inference",
+    "href": "slides.html#full-bayesian-inference",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Full Bayesian Inference",
+    "text": "Full Bayesian Inference\n\nExplore the posterior distribution via MCMC (can be expensive in some situations)\nPosterior is obtained from gaussian likelihood, and suitable priors for the parameters, e.g. gamma priors for error precisions, sparcity enforced prior for GP covariance parameters etc.\n\n\n\n\n\n\nEstimated posterior distribution of the parameters \\((\\theta_1, \\cdots, \\theta_5,\n\\alpha)\\)\nThe diagonal shows the estimated marginal posterior pdf for each parameter\nThe off-diagonal images give estimates of bivariate marginals; to contour lines show estimated 90% hpd regions."
+  }
+]

@@ -1,0 +1,31 @@
+project:
+  type: website      # or "default", but "website" makes Pages hosting nicer
+  output-dir: docs   # GitHub Pages will serve from /docs
+
+format:
+  revealjs:
+    mathjax: true
+    theme: simple
+    css: theme/custom.css
+    width: 1440        # virtual slide width
+    height: 810        # virtual slide height (16:9)
+    margin: 0.1       # default is 0.1 (10%); use 2% margin instead
+    minScale: 0.2      # how much it can shrink on small screens
+    maxScale: 4        # how much it can grow on big screens
+    auto-animate: true
+    slide-number: true
+    incremental: true
+    toc: false
+    code-fold: false
+    code-overflow: scroll
+    self-contained: false
+    progress: true
+    transition: fade
+    navigation-mode: vertical
+
+website:
+  title: "Calibration"
+  navbar:
+    left:
+      - text: "Slides"
+        href: slides.html

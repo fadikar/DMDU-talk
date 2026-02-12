@@ -1,0 +1,926 @@
+---
+title: "Calibration of Stochastic Agent-Based Model"
+subtitle: "DMDU meeting"
+author: "Presenter: Arindam Fadikar"
+affiliation: "Decision and Infrastructure Sciences"
+institute: "Argonne National Laboratory"
+date: "February 12, 2025"
+date-format: long
+bibliography: refs.bib
+title-slide-attributes:
+  data-background-image: "figures/Chicago.jpg"
+  data-background-size: cover # Optional: Adjust how the image fits
+  data-background-opacity: "0.25" # Optional: Adjust image opacity
+echo: true
+format:
+  revealjs:
+    margin: 0.15
+    theme: simple
+    slide-number: true
+    incremental: false
+    smaller: true
+    toc: false
+    code-fold: false
+    code-overflow: scroll
+    self-contained: true
+    progress: true
+    transition: fade
+    navigation-mode: vertical
+    highlight-style: github
+    code-block-background: "#f7f9fc"
+    code-block-border-left: "#1a6f8f"   # MetaRVM teal
+execute:
+  echo: false
+  warning: false
+  message: false
+  cache: false
+---
+
+
+## Plan for today
+
+-   A gentle introduction to calibration/inverse problem
+    -   Finding $x = f^{-1}(y)$
+-   A live example of calibrating an Agent Based model of Ebola
+    -   **Surrogate** models as emulators
+    -   Considerations for **stochastic** simulators
+    -   Multi-variate output
+-   Results from a real application
+
+-----------------------------------------------------------------
+
+## Calibration
+
+```{mermaid}
+%%{init: {'flowchart': {'curve': 'linear'}, 'theme': 'base', 'themeVariables': { 'fontSize': '18px', 'fontFamily': 'arial'}, 'flowchart': {'htmlLabels': true, 'useMaxWidth': true}}}%%
+graph TD
+    A["Input Parameters"] -->|Feed to| B["Simulator"]
+    B -->|Produces| C["Simulated Output"]
+    D["Observations"]
+    D -->|Compare with| E["Calibration Algorithm"]
+    C -->|Input to| E
+    E -->|Returns| F["Estimated Input Parameters"]
+    F -.->|Feedback Loop| A
+    
+    linkStyle 0,1,2,3,4,5 stroke:#333,stroke-width:2px,color:#FF1493
+    
+
+    style A fill:#e1f5ff
+    style B fill:#fff3e0
+    style C fill:#f3e5f5
+    style D fill:#e8f5e9
+    style E fill:#fce4ec
+    style F fill:#e1f5ff
+```
+
+----------------------------------
+
+## Calibration with emulator
+
+::: {.columns}
+
+::: {.column width="50%" .center}
+
+#### Emulator Training
+
+```{mermaid}
+%%{init: {'fontSize': '20px'}, 'flowchart': {'htmlLabels': true, 'useMaxWidth': true}}%%
+graph TD
+    A["Input Parameters"]
+    A -->|Feed to| C["Simulator"]
+    C -->|Produces| E["Simulated Output"]
+    E -->|Train| B["Emulator"]
+    
+    linkStyle 0,1,2 stroke:#333,stroke-width:2px,color:#FF1493
+
+    style A fill:#e1f5ff
+    style B fill:#fff3e0
+    style C fill:#fff3e0
+    style E fill:#f3e5f5
+```
+:::
+
+::: {.column width="50%"}
+
+#### Calibration
+
+```{mermaid}
+%%{init: {'fontSize': '20px'}}%%
+graph TD
+    A["Input Parameters"]
+    A -->|Feed to| B["Emulator"]
+    B -->|Produces| D["Emulated Output"]
+    F["Observations"] -->|Compare with| G["Calibration Algorithm"]
+    D -->|Input to| G
+    G -->|Returns| H["Estimated Input Parameters"]
+    H -.->|Feedback Loop| A
+    
+    linkStyle 0,1,2,3,4,5 stroke:#333,stroke-width:2px,color:#FF1493
+
+    style A fill:#e1f5ff
+    style B fill:#fff3e0
+    style D fill:#f3e5f5
+    style F fill:#e8f5e9
+    style G fill:#fce4ec
+    style H fill:#e1f5ff
+```
+:::
+
+:::
+
+-----------------------------------------------------------------
+
+## Example: Ebola model
+
+- An agent-based model for Ebola in Liberia.
+- Depends on a highly detailed synthetic population with realistic contact networks and demographic characteristics.
+- 5 dimensional inputs
+    - transmission rate ($\theta_1$)
+    - initial infections ($\theta_2$)
+    - hospital intervention delay ($\theta_3$)
+    - hospital intervention efficacy ($\theta_4$)
+    - travel intervention ($\theta_5$)
+- Time-series output of daily infections
+- Stochastic output
+
+<!-- $$ f: (\theta_1, \cdots, \theta_5) \to (Y_1, \cdots, Y_t) $$ -->
+
+-----------------------------------------------------------------
+
+## The Calibration Challenge
+
+#### We were given:
+
+- A ground truth time series of observed Ebola cases.
+- A set of simulation runs pre specified parameter values.
+
+#### Goal:
+
+- To find calibrated model which can be used to make forward predictions and run scenario analyses.
+
+::: {.callout}
+$$ \text{Find} \;\;\; \Theta^* = \left\{(\theta_1, \cdots, \theta_5): f^{\text{sim}}(\theta_1, \cdots, \theta_5)\approx \left(Y_1^{(obs)}, \cdots, Y_t^{(obs)}\right)\right\} $$ 
+:::
+
+-----------------------------------------------------------------
+
+## Simulation Campaign
+
+::: {.columns}
+
+::: {.column width="50%"}
+
+#### Simulation Input
+![](figures/design_holdout.svg){width=100%}
+:::
+
+::: {.column width="50%"}
+
+#### Simulation Output
+\
+\
+![](figures/sims-obs100.svg){width=100%}
+:::
+
+:::
+
+## Build an Emulator
+
+- We don't have access to the (expnesive) Ebola ABM
+- Even if we had, we wouldn't be able to run arbitrarily large number of simulations due to budget constraints
+
+#### What is an emulator?
+
+- An approximation of the actual simulator.
+- Cheap to evaluate, often limited in functionality.
+- Desirable to have meaningful statistical properties.
+
+```{r, fig.align = "center"}
+# Basic GP emulator demo (1D)
+library(DiceKriging)
+
+set.seed(1)
+
+# "Computer model"
+f_true <- function(x) sin(2*pi*x) + 0.5*x
+
+# Training design and noisy observations
+n_train <- 10
+x_train <- sort(runif(n_train, 0, 1))
+y_train <- f_true(x_train) + rnorm(n_train, sd = 0.08)
+
+# Fit GP surrogate
+gp <- km(
+  design = data.frame(x = x_train),
+  response = y_train,
+  covtype = "matern5_2",
+  nugget.estim = TRUE,
+  control = list(trace = FALSE)
+)
+
+# Prediction grid
+x_grid <- seq(0, 1, length.out = 400)
+pred <- predict(gp, newdata = data.frame(x = x_grid), type = "UK")
+
+mu <- pred$mean
+sd <- pred$sd
+lo <- mu - 1.96 * sd
+hi <- mu + 1.96 * sd
+
+y_true <- f_true(x_grid)
+
+# Colors
+col_true <- "black"
+col_gp   <- "#1b9e77"
+col_band <- adjustcolor("#1b9e77", alpha.f = 0.2)
+
+# Plot
+plot(x_grid, y_true, type = "l", ylim = c(-2, 3),
+     lwd = 2, lty = 1, col = col_true,
+     xlab = "x", ylab = "y",
+     main = expression(
+       paste("GP Emulator for  f(x) = sin(2",pi, "x) + 0.5x")
+     ))
+
+# Uncertainty band
+polygon(c(x_grid, rev(x_grid)),
+        c(lo, rev(hi)),
+        border = NA,
+        col = col_band)
+
+# GP mean
+lines(x_grid, mu,
+      lwd = 2, lty = 2, col = col_gp)
+
+# Training observations
+points(x_train, y_train,
+       pch = 19, col = "#d95f02", cex = 1.2)
+
+legend("topleft", bty = "n",
+       legend = c("True function",
+                  "Training observations",
+                  "GP mean",
+                  "95% predictive band"),
+       col = c(col_true,
+               "#d95f02",
+               col_gp,
+               col_band),
+       lwd = c(2, NA, 2, NA),
+       lty = c(1, NA, 2, NA),
+       pch = c(NA, 19, NA, 15),
+       pt.cex = c(NA, 1.2, NA, 2))
+```
+
+## Gaussian Process as an Emulator
+
+- A **non-parametric** Bayesian approach to modeling functions
+- Defines a distribution over functions, not just parameters
+- Any finite collection of function values follows a multivariate Gaussian distribution
+
+::: {.callout-note}
+$$z(x) \sim \mathcal{GP}(m(x), k(x, x'))$$
+
+where $m(x)$ is the mean function and $k(x, x')$ is the covariance (kernel) function
+:::
+
+
+- **Core idea**: Encode relationship between $z(x)$ and $z(x')$ based on **distance** between $x$ and $x'$
+  - If $x$ and $x'$ are close, then $z(x)$ and $z(x')$ should be similar
+  - Covariance function $k(x, x')$ captures this spatial correlation
+
+-----------------------------
+
+## Covariance Kernels
+
+#### Samples from unconditional GP
+
+- Define locations $(x_1, x_2, \cdots, x_n)$.
+- Evaluate the covariance matrix $K$ according to the covariance kernel.
+- Draw sample from $MVN(0, K)$.
+
+\
+\
+
+#### Common Covariance Kernels
+
+- **RBF (Radial Basis Function / Squared Exponential)**: $k(x, x') = \sigma^2 \exp\left(-\frac{\|x - x'\|^2}{2\ell^2}\right)$
+
+- **Matérn**: $k(x, x') = \sigma^2 \frac{2^{1-\nu}}{\Gamma(\nu)} \left(\frac{\sqrt{2\nu}\|x - x'\|}{\ell}\right)^\nu K_\nu\left(\frac{\sqrt{2\nu}\|x - x'\|}{\ell}\right)$
+
+- **Periodic**: $k(x, x') = \sigma^2 \exp\left(-\frac{2\sin^2(\pi|x - x'|/p)}{\ell^2}\right)$
+
+- **Linear**: $k(x, x') = \sigma^2 (x - c)(x' - c)$
+
+-----------------
+
+## Covariance Kernels
+
+#### Samples from unconditional GP
+
+```{r, fig.align = "center", fig.height = 6, fig.width = 8}
+source("R/GP_example.R")
+
+set.seed(42)
+
+# Create x grid
+x_grid <- seq(-5, 5, length.out = 100)
+
+# Define observation points
+x_obs <- c(-4, -1, 2, 4)
+y_obs <- sin(x_obs) + rnorm(length(x_obs), 0, 0.1)
+
+# cat("\n=== UNCONDITIONED GP SAMPLES ===\n")
+# cat("Drawing samples from GP prior with different kernels\n\n")
+
+# Create a 2x2 plot layout
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+
+# 1. Squared Exponential Kernel
+samples_se <- sample_unconditioned_gp(
+  x_grid, 
+  squared_exponential_kernel,
+  list(sigma = 1.0, length_scale = 1.0),
+  n_samples = 5
+)
+plot_gp_samples(x_grid, samples_se, 
+                title = "Squared Exponential Kernel\n(smooth, infinitely differentiable)")
+
+# 2. Matern Kernel
+samples_matern <- sample_unconditioned_gp(
+  x_grid,
+  matern_kernel,
+  list(sigma = 1.0, length_scale = 1.0, nu = 5/2),
+  n_samples = 5
+)
+plot_gp_samples(x_grid, samples_matern,
+                title = "Matern Kernel (nu=5/2)\n(less smooth than RBF)")
+
+# 3. Periodic Kernel
+samples_periodic <- sample_unconditioned_gp(
+  x_grid,
+  periodic_kernel,
+  list(sigma = 1.0, length_scale = 1.0, period = 2.0),
+  n_samples = 5
+)
+plot_gp_samples(x_grid, samples_periodic,
+                title = "Periodic Kernel\n(repeating patterns)")
+
+# 4. Linear Kernel
+samples_linear <- sample_unconditioned_gp(
+  x_grid,
+  linear_kernel,
+  list(sigma = 1.0, c = 0.0),
+  n_samples = 5
+)
+plot_gp_samples(x_grid, samples_linear,
+                title = "Linear Kernel\n(polynomial functions)")
+```
+
+---------------------
+
+## Covariance Kernel - RBF
+
+#### Samples from unconditional GP
+
+```{r, fig.align = "center", fig.height = 6, fig.width = 8}
+source("R/GP_example.R")
+
+set.seed(42)
+
+# Create x grid
+x_grid <- seq(-5, 5, length.out = 100)
+
+# Define observation points
+x_obs <- c(-4, -1, 2, 4)
+y_obs <- sin(x_obs) + rnorm(length(x_obs), 0, 0.1)
+
+# cat("\n=== UNCONDITIONED GP SAMPLES ===\n")
+# cat("Drawing samples from GP prior with different kernels\n\n")
+
+# Create a 2x2 plot layout
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+
+# 1. Squared Exponential Kernel
+samples_se <- sample_unconditioned_gp(
+  x_grid, 
+  squared_exponential_kernel,
+  list(sigma = 1.0, length_scale = 1.0),
+  n_samples = 5
+)
+plot_gp_samples(x_grid, samples_se, 
+                title = expression(paste("Squared Exponential Kernel (", l , "=1, ", sigma ,"=1)")))
+
+# 2. RBF
+samples_se <- sample_unconditioned_gp(
+  x_grid, 
+  squared_exponential_kernel,
+  list(sigma = 1.0, length_scale = 3.0),
+  n_samples = 5
+)
+plot_gp_samples(x_grid, samples_se, 
+                title = expression(paste("Squared Exponential Kernel (", l , "=3, ", sigma ,"=1)")))
+
+# 3. Periodic Kernel
+samples_se <- sample_unconditioned_gp(
+  x_grid, 
+  squared_exponential_kernel,
+  list(sigma = 2.0, length_scale = 1.0),
+  n_samples = 5
+)
+plot_gp_samples(x_grid, samples_se, 
+                title = expression(paste("Squared Exponential Kernel (", l , "=1, ", sigma ,"=2)")))
+
+# 4. Linear Kernel
+samples_se <- sample_unconditioned_gp(
+  x_grid, 
+  squared_exponential_kernel,
+  list(sigma = 2.0, length_scale = 3.0),
+  n_samples = 5
+)
+plot_gp_samples(x_grid, samples_se, 
+                title = expression(paste("Squared Exponential Kernel (", l , "=3, ", sigma ,"=2)")))
+```
+
+
+-----------------------------------------------------------------
+
+## Covariance Kernel - RBF
+
+- Observe: $(X, Z)$ where $X = \{x_1, ..., x_n\}$ and $Z = \{z_1, ..., z_n\}$
+- Test points: $X_* = \{x_1^*, ..., x_m^*\}$
+
+#### Joint Distribution
+
+The joint distribution of observed and test points is:
+
+$$\begin{bmatrix} Z \\ Z_* \end{bmatrix} \sim \mathcal{N}\left(
+\begin{bmatrix} \mu \\ \mu_* \end{bmatrix},
+\begin{bmatrix} K(X, X) + \sigma_n^2 I & K(X, X_*) \\ K(X_*, X) & K(X_*, X_*) \end{bmatrix}
+\right)$$
+
+where $\sigma_n^2$ is the observation noise variance
+
+#### Conditional Distribution
+
+The posterior distribution $Z_* | X, Z, X_*$ is Gaussian:
+
+$$Z_* | X, Z, X_* \sim \mathcal{N}(\mu_{*|Z}, \Sigma_{*|Z})$$
+
+where:
+
+- $\mu_{*|Z} = \mu_* + K(X_*, X)[K(X, X) + \sigma_n^2 I]^{-1}(Z - \mu)$
+
+- $\Sigma_{*|Z} = K(X_*, X_*) - K(X_*, X)[K(X, X) + \sigma_n^2 I]^{-1}K(X, X_*)$
+
+------------------------
+
+## Covariance Kernel - RBF
+
+#### Samples from conditional GP 
+
+```{r, fig.align = "center", fig.height = 6, fig.width = 8}
+source("R/GP_example.R")
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+
+# 1. Squared Exponential - Conditioned
+result_se <- sample_conditioned_gp(
+  x_grid, x_obs, y_obs,
+  squared_exponential_kernel,
+  list(sigma = 1.0, length_scale = 1.0),
+  noise_var = 0.01,
+  n_samples = 5
+)
+plot_gp_samples(x_grid, result_se$samples, x_obs, y_obs,
+                title = expression(paste("Squared Exponential Kernel (", l , "=1, ", sigma ,"=1)")))
+
+result_se <- sample_conditioned_gp(
+  x_grid, x_obs, y_obs,
+  squared_exponential_kernel,
+  list(sigma = 1.0, length_scale = 3.0),
+  noise_var = 0.01,
+  n_samples = 5
+)
+plot_gp_samples(x_grid, result_se$samples, x_obs, y_obs,
+                title = expression(paste("Squared Exponential Kernel (", l , "=3, ", sigma ,"=1)")))
+
+result_se <- sample_conditioned_gp(
+  x_grid, x_obs, y_obs,
+  squared_exponential_kernel,
+  list(sigma = 2.0, length_scale = 1.0),
+  noise_var = 0.01,
+  n_samples = 5
+)
+plot_gp_samples(x_grid, result_se$samples, x_obs, y_obs,
+                title = expression(paste("Squared Exponential Kernel (", l , "=1, ", sigma ,"=2)")))
+
+result_se <- sample_conditioned_gp(
+  x_grid, x_obs, y_obs,
+  squared_exponential_kernel,
+  list(sigma = 2.0, length_scale = 3.0),
+  noise_var = 0.01,
+  n_samples = 5
+)
+plot_gp_samples(x_grid, result_se$samples, x_obs, y_obs,
+                title = expression(paste("Squared Exponential Kernel (", l , "=3, ", sigma ,"=2)")))
+```
+
+------------------------
+
+## Covariance Kernel - RBF
+
+#### Samples from conditional GP 
+
+```{r, fig.align = "center", fig.height = 6, fig.width = 8}
+source("R/GP_example.R")
+par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
+
+# 1. Squared Exponential - Conditioned
+result_se <- sample_conditioned_gp(
+  x_grid, x_obs, y_obs,
+  squared_exponential_kernel,
+  list(sigma = 1.0, length_scale = 1.0),
+  noise_var = 0.01,
+  n_samples = 5
+)
+plot_gp_posterior(x_grid, result_se$mean, result_se$cov, x_obs, y_obs,
+                title = expression(paste("Squared Exponential Kernel (", l , "=1, ", sigma ,"=1)")))
+
+result_se <- sample_conditioned_gp(
+  x_grid, x_obs, y_obs,
+  squared_exponential_kernel,
+  list(sigma = 1.0, length_scale = 3.0),
+  noise_var = 0.01,
+  n_samples = 5
+)
+plot_gp_posterior(x_grid, result_se$mean, result_se$cov, x_obs, y_obs,
+                title = expression(paste("Squared Exponential Kernel (", l , "=3, ", sigma ,"=1)")))
+
+result_se <- sample_conditioned_gp(
+  x_grid, x_obs, y_obs,
+  squared_exponential_kernel,
+  list(sigma = 2.0, length_scale = 1.0),
+  noise_var = 0.01,
+  n_samples = 5
+)
+plot_gp_posterior(x_grid, result_se$mean, result_se$cov, x_obs, y_obs,
+                title = expression(paste("Squared Exponential Kernel (", l , "=1, ", sigma ,"=2)")))
+
+result_se <- sample_conditioned_gp(
+  x_grid, x_obs, y_obs,
+  squared_exponential_kernel,
+  list(sigma = 2.0, length_scale = 3.0),
+  noise_var = 0.01,
+  n_samples = 5
+)
+plot_gp_posterior(x_grid, result_se$mean, result_se$cov, x_obs, y_obs,
+                title = expression(paste("Squared Exponential Kernel (", l , "=3, ", sigma ,"=2)")))
+```
+
+--------------
+
+## Back to the problem
+
+#### Consider a smaller problem.
+
+ - Calibrate to the observed cumulative infections at the end of week 30.
+ - Pretend that the simulation is deterministic (only use one replicate at each input).
+ - Need an emulator for 30 weeks cumulative infections.
+
+```{r, fig.height = 4, fig.width = 6}
+# read data
+
+# ground truth
+obs = read.table('data/obs.csv', header=T, sep=',')
+
+# simulation input
+d <- matrix(scan('data/sim_design.txt'), ncol=5, byrow=T)
+colnames(d) <- paste0('theta_', 1:5)
+
+# simulation output
+load('data/sim.RData')
+nrep = 100; 
+nweek = 56; 
+m = 100
+
+
+# For this calibration exercise we consider the cumulative number of infections
+# at the end of 30 weeks as the quantity of interest
+
+# ground truth at week 30
+obs30 <- cumsum(obs$X)[30]
+
+# simulation data at week 30 at one replicate
+sim30 <- sima[1, , 30]
+
+plot(sim30, log = "y", ylab = "Cumulative infections at week 30", xlab = "parameter index")
+abline(h = obs30, col = "red", cex = 1.2)
+text(40, obs30-2000, "observation", col = 2, cex = 1.2)
+
+```
+
+----------------
+
+## Emulator for week 30 cumulative infections
+
+::: {.columns}
+
+::: {.column width="50%"}
+
+#### Data Preprocessing 
+
+```{r, echo = TRUE, fig.align = "center", fig.heigh = 6, fig.width = 6}
+# d is a matrix of order 100x5, where each row represents one unique combination of
+# (theta_1, ..., theta_5)
+# Normalize input parameters to [0, 1]
+d_min <- apply(d, 2, min)
+d_max <- apply(d, 2, max)
+d_normalized <- sweep(sweep(d, 2, d_min, "-"), 2, d_max - d_min, "/")
+
+# Transform output
+sim30_log <- log(sim30 + 1)
+
+y_std <- (sim30_log - mean(sim30_log)) / sd(sim30_log)
+obs30_std <- (log(obs30) - mean(sim30_log)) / sd(sim30_log)
+
+plot(y_std, ylab = "Log Cumulative infections at week 30", xlab = "parameter index")
+abline(h = obs30_std, col = "red", cex = 1.2)
+text(40, obs30_std-2, "observation", col = 2, cex = 1.2)
+
+```
+
+:::
+
+::: {.column width="50%"}
+
+#### GP fitting
+
+```{r, echo = TRUE, fig.align = "center", fig.heigh = 5, fig.width = 5}
+library(hetGP)
+gp_fit <- mleHomGP(X = d_normalized, Z = y_std, known = list(beta0 = 0))
+gp_fit
+plot(gp_fit)
+```
+
+:::
+
+:::
+
+## Run Calibration
+
+Plug the emulator in any optimization/inference routine of your choice to find good $(\theta_1, \cdots, \theta_5)$ candidates.
+
+- We use Approximate Bayesian Computation
+
+```{r, fig.align = "center", echo = TRUE, eval = FALSE}
+
+# ABC settings
+n_abc <- 100000
+tolerance <- 0.2
+
+# generate samples from prior
+abc_samples <- matrix(runif(n_abc * 5), nrow = n_abc, ncol = 5)
+colnames(abc_samples) <- paste0('theta_', 1:5)
+
+pred_abc <- predict(gp_fit, abc_samples)
+pred_mean_abc <- pred_abc$mean
+pred_sd_abc <- sqrt(pred_abc$sd2 + pred_abc$nugs)
+
+discrepancy <- abs(pred_mean_abc - obs30_std)
+
+accepted <- discrepancy < tolerance
+n_accepted <- sum(accepted)
+
+cat(sprintf("ABC Results:\n"))
+cat(sprintf("  Samples accepted: %d / %d (%.2f%%)\n", 
+            n_accepted, n_abc, 100 * n_accepted / n_abc))
+
+abc_accepted <- abc_samples[accepted, ]
+
+abc_accepted_original <- sweep(abc_accepted, 2, d_max - d_min, "*")
+abc_accepted_original <- sweep(abc_accepted_original, 2, d_min, "+")
+
+par(mfrow = c(2, 3))
+for (i in 1:5){
+  hist(abc_accepted_original[, i], main = expression(paste("Posterior of ", theta[i])),
+  xlab = expression(paste(theta[i])))
+}
+
+hist(exp(pred_mean_abc[accepted] * sd(sim30_log) + mean(sim30_log)), main = "Posterior cumulative infections", xlim = c(5000, 8000), xlab = "cumulative infections")
+abline(v = obs30, col = 2, lty = 2, cex = 1.2)
+```
+
+## Run Calibration
+
+Plug the emulator in any optimization/inference routine of your choice to find good $(\theta_1, \cdots, \theta_5)$ candidates.
+
+- We use Approximate Bayesian Computation
+
+```{r, fig.align = "center", echo = F, eval = T}
+
+# ABC settings
+n_abc <- 1000000
+tolerance <- 0.01
+
+# generate samples from prior
+abc_samples <- matrix(runif(n_abc * 5), nrow = n_abc, ncol = 5)
+colnames(abc_samples) <- paste0('theta_', 1:5)
+
+pred_abc <- predict(gp_fit, abc_samples)
+pred_mean_abc <- pred_abc$mean
+pred_sd_abc <- sqrt(pred_abc$sd2 + pred_abc$nugs)
+
+discrepancy <- abs(pred_mean_abc - obs30_std)
+
+accepted <- discrepancy < tolerance
+n_accepted <- sum(accepted)
+
+cat(sprintf("ABC Results:\n"))
+cat(sprintf("  Samples accepted: %d / %d (%.2f%%)\n", 
+            n_accepted, n_abc, 100 * n_accepted / n_abc))
+
+abc_accepted <- abc_samples[accepted, ]
+
+abc_accepted_original <- sweep(abc_accepted, 2, d_max - d_min, "*")
+abc_accepted_original <- sweep(abc_accepted_original, 2, d_min, "+")
+
+par(mfrow = c(2, 3))
+for (i in 1:5){
+  hist(abc_accepted_original[, i], main = expression(paste("Posterior of ", theta[i])),
+  xlab = expression(paste(theta[i])))
+}
+
+hist(exp(pred_mean_abc[accepted] * sd(sim30_log) + mean(sim30_log)), main = "Posterior cumulative infections", xlim = c(6000, 7000), xlab = "cumulative infections")
+abline(v = obs30, col = 2, lty = 2, cex = 2)
+```
+
+---------------------
+
+## How to deal with stochastic output
+
+- A natural approach is to use the mean (and variance) of the simulation output as the summary statistic for comparison with observations.
+- A GP emulator can approximate both the mean and the variance given the input.
+
+```{r, echo = TRUE}
+# flatten the replicated output
+sim30 <- as.numeric(sima[, , 30])
+sim30_log <- log(sim30 + 1)
+
+y_std <- (sim30_log - mean(sim30_log)) / sd(sim30_log)
+
+# generate a replicated design matrix
+d_normalized_rep <- d_normalized[rep(1:100, each = 100), ]
+
+gp_fit <- mleHetGP(X = d_normalized_rep, Z = y_std, known = list(beta0 = 0), 
+                  covtype = "Matern5_2")
+gp_fit
+```
+
+---------------------
+
+## How to deal with stochastic output
+
+- A natural approach is to use the mean (and variance) of the simulation output as the summary statistic for comparison with observations.
+- A GP emulator can approximate both the mean and the variance given the input.
+
+```{r, echo = TRUE, fig.align = "center", fig.height = 7, fig.width = 7}
+plot(gp_fit)
+```
+
+---------------------
+
+## Issue with Gaussian assumption
+
+![](figures/sim3.svg){width=100%}
+
+- The replicate variablity can not be sufficiently described by a mean and a variance of a Gaussian distribution.
+
+## Use Quantiles 
+
+- Describe the replicate variabilty via empirical quantiles.
+- Model the quantiles using GP.
+
+![](figures/sims-obs3_grey.svg){width=100%}
+
+## Quantile GP 
+
+```{r, echo = TRUE}
+# compute empirical quantiles
+sim30_q <- apply(sima[, , 30], 2, quantile, probs = c(0.05, 0.275, 0.5, 0.725, 0.95))
+sim30_q[, 1:5]
+
+# augment the quantile input to the design matrix
+d_normalized_q <- cbind(d_normalized[rep(1:100, each = 5), ], 
+                        rep(c(0.05, 0.275, 0.5, 0.725, 0.95), 5))
+colnames(d_normalized_q)[6] <- "alpha"
+d_normalized_q[1:10, ]                       
+```
+
+## Quantile GP
+
+- Feed the augmented data into any standard GP module.
+
+```{r, echo = TRUE, fig.height = 6, fig.width = 6}
+
+sim30_q_log <- log(sim30_q + 1)
+sim30_q_log <- as.numeric(sim30_q_log)
+
+y_std <- (sim30_q_log - mean(sim30_q_log)) / sd(sim30_q_log)
+
+gp_fit <- mleHomGP(X = d_normalized_q, Z = y_std, known = list(beta0 = 0), 
+                  covtype = "Matern5_2")
+
+plot(gp_fit)
+
+```
+
+## Quantile GP + ABC
+
+```{r, fig.align = "center", echo = F, eval = T}
+
+# ABC settings
+n_abc <- 100000
+tolerance <- 0.01
+
+# generate samples from prior
+abc_samples <- matrix(runif(n_abc * 6), nrow = n_abc, ncol = 6)
+colnames(abc_samples) <- c(paste0('theta_', 1:5), "alpha")
+
+pred_abc <- predict(gp_fit, abc_samples)
+pred_mean_abc <- pred_abc$mean
+pred_sd_abc <- sqrt(pred_abc$sd2 + pred_abc$nugs)
+
+discrepancy <- abs(pred_mean_abc - obs30_std)
+
+accepted <- discrepancy < tolerance
+n_accepted <- sum(accepted)
+
+cat(sprintf("ABC Results:\n"))
+cat(sprintf("  Samples accepted: %d / %d (%.2f%%)\n", 
+            n_accepted, n_abc, 100 * n_accepted / n_abc))
+
+abc_accepted <- abc_samples[accepted, ]
+
+abc_accepted_original <- sweep(abc_accepted[, 1:5], 2, d_max - d_min, "*")
+abc_accepted_original <- cbind(sweep(abc_accepted_original, 2, d_min, "+"), abc_accepted[, 6])
+
+par(mfrow = c(2, 3))
+for (i in 1:5){
+  hist(abc_accepted_original[, i], main = expression(paste("Posterior of ", theta[i])),
+  xlab = expression(paste(theta[i])))
+}
+hist(abc_accepted_original[, 6], main = expression(paste("Posterior of ", theta[i])),
+  xlab = expression(paste(alpha)))
+
+# hist(exp(pred_mean_abc[accepted] * sd(sim30_log) + mean(sim30_log)), main = "Posterior cumulative infections", xlim = c(6000, 7000), xlab = "cumulative infections")
+# abline(v = obs30, col = 2, lty = 2, cex = 2)
+```
+
+-------------------------
+
+## Emulator for Multivariate Output
+
+- So far we have emulated scalar output - cumulative infections at week 30.
+- How can we extend GP emulator to time-series output?
+     - Use time as an input to GP - not scalable
+     - Use basis decomposition
+
+::: {.columns}
+
+::: {.column width="50%" .center}
+
+$$f^{\text{sim}}(\theta, \alpha) = \underbrace{\phi_0}_{\text{mean}} + \sum_{k=1}^{p} \underbrace{\phi_k}_{\text{basis}} \underbrace{w_k(\theta, \alpha)}_{\text{GP}} + \epsilon$$
+
+::: 
+
+::: {.column width="50%" .center}
+
+![](figures/pcgp.svg){width=100%}
+
+:::
+
+:::
+
+-------------------------
+
+## Full Bayesian Inference
+
+- Explore the posterior distribution via MCMC (can be expensive in some situations)
+- Posterior is obtained from gaussian likelihood, and suitable priors for the parameters, e.g. gamma priors for error precisions, sparcity enforced prior for GP covariance parameters etc. 
+
+::: {.columns}
+
+::: {.column width="50%" .center}
+![](figures/postTheta.svg){width=100%}
+
+::: 
+
+::: {.column width="50%" .center}
+
+- Estimated posterior distribution of the parameters $(\theta_1, \cdots, \theta_5,
+\alpha)$
+- The diagonal shows the estimated marginal posterior pdf for each parameter 
+- The off-diagonal images give estimates of bivariate marginals; to contour lines show estimated 90\% hpd regions.
+
+:::
+
+:::
