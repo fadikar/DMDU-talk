@@ -4,7 +4,7 @@
     "href": "slides.html#plan-for-today",
     "title": "Calibration of Stochastic Agent-Based Model",
     "section": "Plan for today",
-    "text": "Plan for today\n\nA gentle introduction to calibration/inverse problem\n\nFinding \\(x = f^{-1}(y)\\)\n\nA live example of calibrating an Agent Based model of Ebola\n\nSurrogate models as emulators\nConsiderations for stochastic simulators\nMulti-variate output\n\nResults from a real application\n\n\n\n\n\nSlides\nhttps://fadikar.com/DMDU-talk/"
+    "text": "Plan for today\n\nA gentle introduction to calibration/inverse problem\n\nFinding \\(x = f^{-1}(y)\\)\n\nA live example of calibrating an Agent Based model of Ebola\n\nSurrogate models as emulators\nConsiderations for stochastic simulators\nMulti-variate output\n\nResults from a real application\n\n\n\n\n\nSlides\nhttps://fadikar.com/DMDU-talk/\nGitHub repository\nhttps://github.com/fadikar/DMDU-talk"
   },
   {
     "objectID": "slides.html#calibration",

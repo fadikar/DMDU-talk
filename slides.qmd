@@ -55,6 +55,13 @@ execute:
 
 https://fadikar.com/DMDU-talk/
 
+#### GitHub repository
+
+https://github.com/fadikar/DMDU-talk
+
+
+
+
 -----------------------------------------------------------------
 
 ## Calibration
