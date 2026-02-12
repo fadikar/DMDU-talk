@@ -214,7 +214,7 @@
     "href": "slides.html#emulator-for-multivariate-output",
     "title": "Calibration of Stochastic Agent-Based Model",
     "section": "Emulator for Multivariate Output",
-    "text": "Emulator for Multivariate Output\n\nSo far we have emulated scalar output - cumulative infections at week 30.\nHow can we extend GP emulator to time-series output?\n\nUse time as an input to GP - not scalable\nUse basis decomposition\n\n\n\n\n\\[f^{\\text{sim}}(\\theta, \\alpha) = \\underbrace{\\phi_0}_{\\text{mean}} + \\sum_{k=1}^{p} \\underbrace{\\phi_k}_{\\text{basis}} \\underbrace{w_k(\\theta, \\alpha)}_{\\text{GP}} + \\epsilon\\]"
+    "text": "Emulator for Multivariate Output\n\nSo far we have emulated scalar output - cumulative infections at week 30.\nHow can we extend GP emulator to time-series output?\n\nUse time as an input to GP - not scalable\nUse basis decomposition\n\n\n\n\n\\[\\mathbf{f}^{\\text{sim}}(\\theta) = \\underbrace{\\phi_0}_{\\text{mean}} + \\sum_{k=1}^{p} \\underbrace{\\phi_k}_{\\text{basis}} \\underbrace{w_k(\\theta)}_{\\text{GP}} + \\epsilon\\]\n\n\\[\\mathbf{f}(\\boldsymbol{\\theta}) =\n\\begin{bmatrix}\nf_1(\\boldsymbol{\\theta}) \\\\\nf_2(\\boldsymbol{\\theta}) \\\\\n\\vdots \\\\\nf_{30}(\\boldsymbol{\\theta})\n\\end{bmatrix}\n= \\phi_0 + \\overbrace{\n\\begin{bmatrix}\n\\phi_{11} & \\phi_{12} & \\cdots & \\phi_{1p} \\\\\n\\phi_{21} & \\phi_{22} & \\cdots & \\phi_{2p} \\\\\n\\vdots    & \\vdots    & \\ddots & \\vdots    \\\\\n\\phi_{30,1} & \\phi_{30,2} & \\cdots & \\phi_{30,p}\n\\end{bmatrix}}^{K}\n\\begin{bmatrix}\nw_1(\\boldsymbol{\\theta}) \\\\\nw_2(\\boldsymbol{\\theta}) \\\\\n\\vdots \\\\\nw_p(\\boldsymbol{\\theta})\n\\end{bmatrix}.\n\\]"
   },
   {
     "objectID": "slides.html#full-bayesian-inference",
@@ -222,5 +222,26 @@
     "title": "Calibration of Stochastic Agent-Based Model",
     "section": "Full Bayesian Inference",
     "text": "Full Bayesian Inference\n\nExplore the posterior distribution via MCMC (can be expensive in some situations)\nPosterior is obtained from gaussian likelihood, and suitable priors for the parameters, e.g. gamma priors for error precisions, sparcity enforced prior for GP covariance parameters etc.\n\n\n\n\n\n\nEstimated posterior distribution of the parameters \\((\\theta_1, \\cdots, \\theta_5,\n\\alpha)\\)\nThe diagonal shows the estimated marginal posterior pdf for each parameter\nThe off-diagonal images give estimates of bivariate marginals; to contour lines show estimated 90% hpd regions."
+  },
+  {
+    "objectID": "slides.html#emulator-for-multivariate-output-1",
+    "href": "slides.html#emulator-for-multivariate-output-1",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Emulator for Multivariate Output",
+    "text": "Emulator for Multivariate Output\nUse singular value decomposition\n\\[\n\\mathbf{f} =\n\\begin{bmatrix}\nf_{1}(\\theta_{1},\\alpha_{1}) & f_{1}(\\theta_{1},\\alpha_{2}) & \\cdots & f_{1}(\\theta_{1},\\alpha_{5}) & \\cdots & f_{1}(\\theta_{100},\\alpha_{1}) & \\cdots & f_{1}(\\theta_{100},\\alpha_{5}) \\\\\nf_{2}(\\theta_{1},\\alpha_{1}) & f_{2}(\\theta_{1},\\alpha_{2}) & \\cdots & f_{2}(\\theta_{1},\\alpha_{5}) & \\cdots & f_{2}(\\theta_{100},\\alpha_{1}) & \\cdots & f_{2}(\\theta_{100},\\alpha_{5}) \\\\\n\\vdots & \\vdots & \\ddots & \\vdots & \\ddots & \\vdots & \\ddots & \\vdots \\\\\nf_{30}(\\theta_{1},\\alpha_{1}) & f_{30}(\\theta_{1},\\alpha_{2}) & \\cdots & f_{30}(\\theta_{1},\\alpha_{5}) & \\cdots & f_{30}(\\theta_{100},\\alpha_{1}) & \\cdots & f_{30}(\\theta_{100},\\alpha_{5})\n\\end{bmatrix}\n=\nU_{30 \\times r}\\,\nD_{r \\times r}\\,\nV^{\\top}_{r \\times (500)} .\n\\]\n\n\n\n\\(\\mathbf{f} = K * W\\\\\nK = \\sqrt{500} \\; U * D \\\\\nW = \\frac{1}{\\sqrt{500}} V'\\)"
+  },
+  {
+    "objectID": "slides.html#emulator-for-multivariate-output-2",
+    "href": "slides.html#emulator-for-multivariate-output-2",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Emulator for Multivariate Output",
+    "text": "Emulator for Multivariate Output\n\n\n\n# arrange the quantiles in (30 x 500) matrix\nsim30_t &lt;- log(sima[, , 1:30] + 1)\n\nsim30_t_q &lt;- apply(sim30_t, c(2, 3), quantile, probs = c(0.05, 0.275, 0.5, 0.725, 0.95))\nsim30_t_q &lt;- aperm(sim30_t_q, c(3, 2, 1))\n\nY_mat &lt;- t(vapply(seq_len(30), function(w) {\n  as.vector(t(sim30_t_q[w, , ]))  # row-wise flatten: point-major, quant-within-point\n}, numeric(100 * 5)))\n\n\n## normalize\nY_mean &lt;- apply(Y_mat, 1, mean)\nY_sd &lt;- sd(Y_mat)\n\nY_mat_std &lt;- (Y_mat - matrix(Y_mean, nrow = 30, ncol = 500)) / Y_sd\n\n\n## SVD\nudv &lt;- svd(Y_mat_std)\n\nK &lt;- udv$u %*% diag(udv$d) * sqrt(ncol(Y_mat_std))\n\npar(mfrow = c(2, 1))\nplot(cumsum(udv$d / sum(udv$d)), type = \"b\", xlab = \"no of component (p)\", ylab = \"cumulative sum\")\nabline(h = c(0.95, 0.99))\n\n\n## check where the cumulative eigen value crosses .95\nnK &lt;- which(cumsum(udv$d / sum(udv$d)) &gt; .95)[1] - 1\n\nK &lt;- K[, 1:nK]\nmatplot(K, type = \"l\", xlab = \"weeks\", ylab = expression(paste(phi)))"
+  },
+  {
+    "objectID": "slides.html#emulator-for-multivariate-output-3",
+    "href": "slides.html#emulator-for-multivariate-output-3",
+    "title": "Calibration of Stochastic Agent-Based Model",
+    "section": "Emulator for Multivariate Output",
+    "text": "Emulator for Multivariate Output\nGP to model \\(W_i(\\theta)\\)\n\nW &lt;- udv$v[, 1:nK] / sqrt(ncol(Y_mat_std))\n\nstr(W)\n\n num [1:500, 1:4] -0.00071 -0.00104 -0.00119 -0.00133 -0.00152 ...\n\n## fit GP to each column of W\ngps &lt;- list()\nfor (ii in 1:nK){\n  gps[[ii]] &lt;- mleHomGP(d_normalized_q, W[, ii], known = list(beta0 = 0), covtype = \"Matern5_2\")\n}\n\nFinal Emulator\nPrediction at an untried input \\((\\theta_1^*, \\cdots, \\theta_5^*, \\alpha^*)\\)"
   }
 ]
